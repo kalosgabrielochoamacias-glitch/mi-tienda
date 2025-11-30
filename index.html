@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Tienda Online</title>
+    <!-- Carga de Tailwind CSS para estilos -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f0f0;
+        }
+        #app-container {
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        .product-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+        .cart-icon {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+        .checkout-button {
+            transition: background-color 0.2s;
+        }
+        /* Estilo para el modal de notificaciones (alert) */
+        #notification-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #333;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .show-notification {
+            opacity: 1 !important;
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-8">
+
+    <!-- Modal de Notificación Personalizado (reemplaza alert()) -->
+    <div id="notification-modal" class="hidden"></div>
+
+    <div id="app-container" class="w-full">
+        <header class="text-center mb-10">
+            <h1 class="text-4xl font-extrabold text-gray-800 mb-2">Mi Tienda Online</h1>
+            <p class="text-lg text-gray-600">Moda y Accesorios con Envío Rápido</p>
+        </header>
+
+        <!-- Contenedor del Carrito -->
+        <div id="cart-container" class="bg-gray-100 p-6 rounded-xl shadow-inner mb-10">
+            <h2 class="text-2xl font-bold text-gray-700 mb-4">
+                <svg class="cart-icon" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3 3h2l.4 2M7 13h10l2-8H5.4m7 13a1 1 0 100 2 1 1 0 000-2zm-6 0a1 1 0 100 2 1 1 0 000-2zm13-8H7"/>
+                </svg>
+                Carrito (<span id="cart-count">0</span> artículos)
+            </h2>
+            <div id="cart-items" class="space-y-3">
+                <!-- Los elementos del carrito se renderizarán aquí -->
+                <p id="empty-cart-message" class="text-gray-500 italic">El carrito está vacío.</p>
+            </div>
+            <div id="cart-summary" class="mt-6 border-t pt-4 flex justify-between items-center hidden">
+                <span class="text-xl font-bold text-gray-800">Total: <span id="cart-total">$0.00</span></span>
+                <button onclick="checkout()" class="checkout-button bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-200">
+                    Finalizar Compra
+                </button>
+            </div>
+        </div>
+
+        <!-- Lista de Productos -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Los productos se renderizarán aquí -->
+            <div data-product-id="1" class="product-card bg-white p-6 rounded-xl shadow-md flex flex-col items-center text-center">
+                <img src="https://placehold.co/150x150/2563EB/ffffff?text=Camisa" alt="Camisa Casual" class="rounded-lg mb-4">
+                <h3 class="text-xl font-semibold mb-1 text-gray-800">Camisa Casual</h3>
+                <p class="text-gray-600 mb-3">$25.00</p>
+                <button onclick="addToCart({ id: 1, name: 'Camisa Casual', price: 25.00 })" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-full transition duration-200 shadow-md">
+                    Añadir al Carrito
+                </button>
+            </div>
+
+            <div data-product-id="2" class="product-card bg-white p-6 rounded-xl shadow-md flex flex-col items-center text-center">
+                <img src="https://placehold.co/150x150/9333EA/ffffff?text=Sudadera" alt="Sudadera con Capucha" class="rounded-lg mb-4">
+                <h3 class="text-xl font-semibold mb-1 text-gray-800">Sudadera con Capucha</h3>
+                <p class="text-gray-600 mb-3">$45.00</p>
+                <button onclick="addToCart({ id: 2, name: 'Sudadera con Capucha', price: 45.00 })" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-full transition duration-200 shadow-md">
+                    Añadir al Carrito
+                </button>
+            </div>
+
+            <div data-product-id="3" class="product-card bg-white p-6 rounded-xl shadow-md flex flex-col items-center text-center">
+                <img src="https://placehold.co/150x150/F59E0B/ffffff?text=Zapatos" alt="Zapatos Deportivos" class="rounded-lg mb-4">
+                <h3 class="text-xl font-semibold mb-1 text-gray-800">Zapatos Deportivos</h3>
+                <p class="text-gray-600 mb-3">$75.00</p>
+                <button onclick="addToCart({ id: 3, name: 'Zapatos Deportivos', price: 75.00 })" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-full transition duration-200 shadow-md">
+                    Añadir al Carrito
+                </button>
+            </div>
+        </section>
+
+    </div>
+
+    <script>
+        // Array para almacenar los elementos del carrito
+        let cart = [];
+        const CART_KEY = 'shoppingCart';
+
+        // --- Funciones de Utilidad ---
+
+        /**
+         * Muestra una notificación temporal en lugar de usar alert().
+         * @param {string} message - Mensaje a mostrar.
+         * @param {number} duration - Duración en milisegundos.
+         */
+        function showNotification(message, duration = 2000) {
+            const notificationEl = document.getElementById('notification-modal');
+            notificationEl.textContent = message;
+            notificationEl.classList.remove('hidden');
+            // Muestra la animación de fade-in
+            setTimeout(() => {
+                notificationEl.classList.add('show-notification');
+            }, 10);
+
+            // Oculta la notificación y la elimina del DOM después de la duración
+            setTimeout(() => {
+                notificationEl.classList.remove('show-notification');
+                setTimeout(() => {
+                    notificationEl.classList.add('hidden');
+                }, 300); // Espera que termine la transición de fade-out
+            }, duration);
+        }
+
+        /**
+         * Carga el carrito desde localStorage.
+         */
+        function loadCart() {
+            const storedCart = localStorage.getItem(CART_KEY);
+            if (storedCart) {
+                try {
+                    cart = JSON.parse(storedCart);
+                } catch (e) {
+                    console.error("Error al parsear el carrito de localStorage:", e);
+                    cart = [];
+                }
+            } else {
+                cart = [];
+            }
+            renderCart();
+        }
+
+        /**
+         * Guarda el carrito en localStorage.
+         */
+        function saveCart() {
+            localStorage.setItem(CART_KEY, JSON.stringify(cart));
+        }
+
+        // --- Funciones de Lógica del Carrito ---
+
+        /**
+         * Añade un producto al carrito.
+         * @param {object} product - El producto a añadir. Debe tener id, name, y price.
+         */
+        function addToCart(product) {
+            // Busca si el producto ya existe en el carrito
+            const existingItem = cart.find(item => item.id === product.id);
+
+            if (existingItem) {
+                existingItem.quantity++;
+            } else {
+                // Si no existe, lo añade con cantidad 1
+                cart.push({ ...product, quantity: 1 });
+            }
+
+            saveCart();
+            renderCart();
+            showNotification(`"${product.name}" añadido al carrito!`, 1500);
+        }
+
+        /**
+         * Elimina un producto del carrito.
+         * @param {number} productId - ID del producto a eliminar.
+         */
+        function removeFromCart(productId) {
+            cart = cart.filter(item => item.id !== productId);
+            saveCart();
+            renderCart();
+            showNotification("Artículo eliminado.", 1500);
+        }
+
+        /**
+         * Actualiza la cantidad de un artículo.
+         * @param {number} productId - ID del producto.
+         * @param {number} newQuantity - Nueva cantidad.
+         */
+        function updateQuantity(productId, newQuantity) {
+            const item = cart.find(item => item.id === productId);
+            if (item) {
+                const quantity = parseInt(newQuantity);
+                if (quantity > 0) {
+                    item.quantity = quantity;
+                } else {
+                    removeFromCart(productId); // Eliminar si la cantidad es 0
+                    return;
+                }
+                saveCart();
+                renderCart();
+            }
+        }
+
+        // --- Funciones de Renderizado (Actualización de la UI) ---
+
+        /**
+         * Renderiza el carrito en la interfaz.
+         */
+        function renderCart() {
+            const cartItemsContainer = document.getElementById('cart-items');
+            const cartCountElement = document.getElementById('cart-count');
+            const cartTotalElement = document.getElementById('cart-total');
+            const cartSummaryElement = document.getElementById('cart-summary');
+            const emptyMessage = document.getElementById('empty-cart-message');
+
+            // Limpiar el contenedor
+            cartItemsContainer.innerHTML = '';
+
+            let total = 0;
+            let totalItems = 0;
+
+            if (cart.length === 0) {
+                emptyMessage.classList.remove('hidden');
+                cartSummaryElement.classList.add('hidden');
+                cartItemsContainer.appendChild(emptyMessage);
+            } else {
+                emptyMessage.classList.add('hidden');
+                cartSummaryElement.classList.remove('hidden');
+
+                cart.forEach(item => {
+                    const itemTotal = item.price * item.quantity;
+                    total += itemTotal;
+                    totalItems += item.quantity;
+
+                    // Creación del elemento HTML para cada artículo del carrito
+                    const itemEl = document.createElement('div');
+                    itemEl.className = 'flex items-center justify-between border-b pb-2 last:border-b-0 last:pb-0';
+                    itemEl.innerHTML = `
+                        <div class="flex-grow">
+                            <p class="font-medium text-gray-800">${item.name}</p>
+                            <p class="text-sm text-gray-500">$${item.price.toFixed(2)} x ${item.quantity}</p>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <input type="number" min="1" value="${item.quantity}"
+                                onchange="updateQuantity(${item.id}, this.value)"
+                                class="w-16 p-1 border rounded-md text-center focus:ring-indigo-500 focus:border-indigo-500">
+                            <button onclick="removeFromCart(${item.id})"
+                                class="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-100 transition duration-200"
+                                aria-label="Eliminar ${item.name}">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                        </div>
+                    `;
+                    cartItemsContainer.appendChild(itemEl);
+                });
+            }
+
+            // Actualizar resumen
+            cartCountElement.textContent = totalItems;
+            cartTotalElement.textContent = `$${total.toFixed(2)}`;
+        }
+
+        // --- Función de Finalizar Compra ---
+
+        /**
+         * Simula la finalización de la compra.
+         */
+        function checkout() {
+            if (cart.length === 0) {
+                showNotification("El carrito está vacío. Agrega productos.", 2500);
+                return;
+            }
+
+            // Crear el objeto de la orden que se pasará a la página de confirmación
+            const order = {
+                id: Date.now(), // ID de orden simple
+                date: new Date().toLocaleDateString('es-ES'),
+                total: cart.reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2),
+                items: cart.map(item => ({
+                    name: item.name,
+                    quantity: item.quantity,
+                    price: item.price.toFixed(2)
+                }))
+            };
+
+            // Guardar la orden en localStorage para que la página de confirmación la lea
+            localStorage.setItem('lastOrder', JSON.stringify(order));
+
+            // Simular el pago y navegar a la página de confirmación
+            // La URL de destino DEBE ser 'confirmation.html'
+            window.location.href = 'confirmation.html';
+        }
+
+        // Inicialización: Cargar el carrito cuando la página esté lista
+        document.addEventListener('DOMContentLoaded', loadCart);
+    </script>
+</body>
+</html>
+
+  
