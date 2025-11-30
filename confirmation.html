@@ -3,167 +3,327 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Confirmación de Orden - Gangas del Explorador</title>
+    <title>Gangas del Explorador - Precios de Locura (Factura y Pago)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Estilos generales */
+        /* Estilos base de Temu-style (urgencia y precios bajos) */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
         body { 
             font-family: 'Inter', sans-serif; 
             background-color: #f0f0f0; 
         }
         #app-container { 
-            max-width: 1000px; 
-            margin: 50px auto; 
-            padding: 20px;
+            max-width: 1400px; 
+            margin: auto; 
+            padding-top: 50px; /* Espacio para el header fijo */
+        }
+        
+        /* HEADER - Estilo Promocional */
+        .header-promo {
+            background-color: #cc0000; /* Rojo vibrante */
+            color: white;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 10;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            padding: 8px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        /* Estilo para la tarjeta de confirmación */
-        .confirmation-card {
+        /* Contador de Oferta Flash */
+        .flash-timer {
+            background-color: #ffcc00; /* Amarillo llamativo */
+            color: #cc0000;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        /* CARD DE PRODUCTO */
+        .product-card {
             background-color: white;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            padding: 30px;
-            border-top: 5px solid #059669; /* Verde para éxito */
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+            cursor: pointer;
+            border: 1px solid #e5e5e5;
+            display: flex;
+            flex-direction: column;
+            text-align: center;
+        }
+        .product-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        
+        /* Contenedor del precio de ganga */
+        .price-container {
+            padding: 5px 10px;
+            background-color: #ffeeee; /* Fondo claro para destacar */
         }
 
-        /* Título de éxito (Temu-style) */
-        .success-title {
-            color: #059669;
-            font-size: 2.5rem;
+        /* Precios */
+        .current-price {
+            color: #cc0000; /* Rojo de Temu */
+            font-size: 1.5em;
             font-weight: 900;
         }
+        .original-price {
+            color: #888;
+            text-decoration: line-through;
+            font-size: 0.8em;
+            margin-left: 5px;
+        }
+        .discount-badge {
+            background-color: #cc0000;
+            color: white;
+            font-weight: bold;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-size: 0.75em;
+            margin-left: auto; /* Mueve el descuento a la derecha */
+        }
 
-        /* Botón CTA */
-        .cta-button {
+        /* BOTÓN DE COMPRA Y PAGO */
+        .buy-button {
             background-color: #ff6600; /* Naranja para CTA */
             transition: background-color 0.2s;
         }
-        .cta-button:hover {
+        .buy-button:hover {
             background-color: #e65c00;
         }
 
-        .summary-box {
-            border: 1px solid #ddd;
-            border-radius: 8px;
+        /* Estilo para la imagen placeholder */
+        .image-placeholder {
+            background-color: #ddd;
+            height: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            font-size: 0.8em;
+            width: 100%;
+        }
+        
+        /* Contenedor de datos bancarios para copiar */
+        .bank-info-box {
+            background-color: #f7f7f7;
+            border: 1px dashed #ccc;
             padding: 15px;
-            background-color: #fafafa;
+            border-radius: 8px;
+        }
+
+        /* Estilos para el botón de Copiar */
+        .copy-button {
+            background-color: #008cba; /* Azul para Copy */
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            transition: background-color 0.2s;
+        }
+        .copy-button:hover {
+            background-color: #007bb5;
+        }
+        
+        /* Estilos para el input de archivo (simulado) */
+        .file-upload-simulated {
+            border: 2px dashed #9ca3af;
+            padding: 15px;
+            text-align: center;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        .file-upload-simulated:hover {
+            border-color: #ef4444;
         }
     </style>
 </head>
 <body>
 
-    <div id="app-container">
+    <!-- BARRA DE ENCABEZADO Y PROMO TEMU-STYLE -->
+    <header class="header-promo">
+        <div class="flex items-center space-x-4">
+            <button onclick="changeView('list')" class="text-xl font-extrabold hover:text-yellow-300">
+                GANGAS DEL EXPLORADOR
+            </button>
+        </div>
         
-        <div id="confirmation-content" class="confirmation-card">
-            <!-- El contenido de la orden se cargará aquí -->
+        <div class="flash-timer flex items-center space-x-2">
+            <span>🔥 ¡OFERTA FLASH!</span>
+            <span id="timer-display">03:15:33</span>
         </div>
 
+        <div class="flex items-center space-x-4">
+            <button onclick="showCart()" class="text-white hover:text-yellow-300 font-bold">
+                🛒 Carrito (<span id="cart-counter">0</span>)
+            </button>
+        </div>
+    </header>
+
+    <!-- CONTENEDOR PRINCIPAL DE LA APLICACIÓN -->
+    <div id="app-container" class="p-4">
+        
+        <!-- VISTA DE LISTA DE PRODUCTOS (GRID) -->
+        <div id="product-list-view" class="hidden">
+            <h1 class="text-3xl font-bold text-center text-gray-800 my-6">¡Descubre las Gangas de Hoy!</h1>
+            <div id="product-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                <!-- Los productos se inyectarán aquí por JavaScript -->
+            </div>
+            <p class="text-center text-gray-500 mt-6">¡Millones de productos más esperan por ti!</p>
+        </div>
+
+        <!-- VISTA DE DETALLE DE PRODUCTO (PDP) -->
+        <div id="product-detail-view" class="hidden max-w-4xl mx-auto bg-white p-6 rounded-lg shadow-xl">
+            <!-- El detalle del producto se inyectará aquí por JavaScript -->
+        </div>
     </div>
 
+    <!-- MODAL SIMPLE DE CARRITO -->
+    <div id="cart-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-lg w-11/12 md:w-1/3 shadow-2xl">
+            <h2 class="text-2xl font-bold mb-4 text-red-700">🛒 Tu Carrito</h2>
+            <div id="cart-items" class="space-y-3 mb-4 max-h-60 overflow-y-auto">
+                <p>El carrito está vacío.</p>
+            </div>
+            <div class="text-xl font-bold pt-4 border-t">
+                Total: <span id="cart-total">$0.00</span>
+            </div>
+            <div class="flex flex-col space-y-3 mt-4">
+                <button id="checkout-button" onclick="showInvoiceStep()" class="buy-button w-full p-3 text-white rounded-lg font-bold" disabled>
+                    Proceder a la Factura (Paso 1/2)
+                </button>
+                <button onclick="document.getElementById('cart-modal').classList.add('hidden')" class="bg-gray-200 text-gray-700 w-full p-3 rounded-lg hover:bg-gray-300">
+                    Seguir Comprando
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE CHECKOUT/PAGO (Dos Pasos) -->
+    <div id="checkout-modal" class="fixed inset-0 bg-black bg-opacity-75 hidden items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-lg w-11/12 md:w-2/5 shadow-2xl">
+            
+            <!-- CONTENIDO DE FACTURA (PASO 1) -->
+            <div id="invoice-step">
+                <h2 class="text-2xl font-bold mb-4 text-orange-600">📝 Paso 1: Datos de Factura y Envío</h2>
+                <form id="invoice-form" onsubmit="event.preventDefault(); generateInvoiceAndProceed();" class="space-y-4">
+                    <input type="text" id="recipientName" placeholder="Nombre completo del destinatario" required 
+                           class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-red-500">
+                    
+                    <input type="text" id="recipientId" placeholder="Cédula/RUC (ej: 0943694943)" required pattern="[0-9]{10,13}" 
+                           class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-red-500">
+                    
+                    <textarea id="shippingAddress" placeholder="Dirección de envío completa" required 
+                              class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-red-500 h-20"></textarea>
+
+                    <button type="submit" class="buy-button w-full p-3 text-white rounded-lg font-bold">
+                        Ver Factura y Proceder al Pago
+                    </button>
+                    <button type="button" onclick="closeCheckout()" class="bg-gray-200 text-gray-700 w-full p-3 rounded-lg hover:bg-gray-300">
+                        Volver al Carrito
+                    </button>
+                </form>
+            </div>
+
+            <!-- CONTENIDO DE PAGO Y VERIFICACIÓN (PASO 2) -->
+            <div id="payment-step" class="hidden">
+                <h2 class="text-2xl font-bold mb-4 text-green-700">✅ Paso 2: Pago y Verificación</h2>
+                
+                <div id="invoice-summary" class="bg-yellow-50 p-4 rounded-lg mb-4 border border-yellow-300 text-sm">
+                    <!-- Resumen de la factura inyectado aquí -->
+                </div>
+
+                <p class="mb-2 text-lg">Total a Transferir: <span id="final-checkout-total" class="text-red-700 font-extrabold text-2xl">$0.00</span></p>
+
+                <h3 class="text-xl font-semibold mb-3">Transferencia Bancaria (Banco Pichincha)</h3>
+                
+                <!-- Datos Bancarios -->
+                <div class="bank-info-box space-y-3 mb-6">
+                    <div class="flex justify-between items-center">
+                        <span class="font-medium">Tipo de Cuenta:</span>
+                        <span class="font-bold text-gray-800">Ahorro transaccional</span>
+                    </div>
+                    <div class="flex justify-between items-center border-t pt-2">
+                        <span class="font-medium">Número:</span>
+                        <span id="account-number" class="font-bold text-red-700">2214148459</span>
+                        <button class="copy-button" onclick="copyToClipboard('2214148459', 'Número de Cuenta')">Copiar</button>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="font-medium">Cédula (CD):</span>
+                        <span id="id-number" class="font-bold text-gray-800">0943694943</span>
+                        <button class="copy-button" onclick="copyToClipboard('0943694943', 'Cédula')">Copiar</button>
+                    </div>
+                </div>
+
+                <!-- Verificación del Pago (Subida del Voucher) -->
+                <h3 class="text-xl font-semibold mb-3">Subir Comprobante de Pago</h3>
+                <div class="file-upload-simulated">
+                    <label for="payment-voucher" class="cursor-pointer text-gray-600">
+                        <span id="file-name-display" class="font-semibold text-red-600">
+                            Haga clic para subir la foto/PDF del voucher
+                        </span>
+                    </label>
+                    <input type="file" id="payment-voucher" accept="image/*, application/pdf" class="hidden" onchange="displayFileName(this)">
+                </div>
+                
+                <button id="verify-payment-btn" onclick="verifyPayment()" class="buy-button w-full p-3 text-white font-extrabold rounded-lg mt-5" disabled>
+                    CONFIRMAR PAGO Y VOUCHER
+                </button>
+                <button onclick="showInvoiceStep()" class="bg-gray-200 text-gray-700 w-full p-3 rounded-lg mt-3 hover:bg-gray-300">
+                    Volver a los datos de la Factura
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+
     <script>
+        // Data de los 20 productos (sin cambios)
+        const products = [
+            { id: 1, name: "Linterna Frontal LED", price: 1.99, originalPrice: 10.00, discount: "80%", sku: "LINT-001", brand: "LightWave", desc: "Linterna ultrabrillante para manos libres. Ideal para acampar o emergencias. Incluye batería.", features: ["80 Lúmenes", "3 Modos de luz", "Funciona con 3 pilas AAA", "Peso: 50g"] },
+            { id: 2, name: "Brújula de Bolsillo Vintage", price: 0.99, originalPrice: 5.00, discount: "80%", sku: "BRUJ-002", brand: "GuideStar", desc: "Brújula compacta y precisa para orientación básica. Diseño resistente a golpes.", features: ["Carcasa de plástico ABS", "Escala de 360 grados", "Incluye cordón", "Diámetro: 45mm"] },
+            { id: 3, name: "Manta Térmica Emergencia (Pack 2)", price: 2.50, originalPrice: 8.00, discount: "69%", sku: "MAN-003", brand: "RescuePro", desc: "Retiene hasta el 90% del calor corporal. Esencial para kits de supervivencia.", features: ["Material Mylar", "Dimensiones: 130x210 cm", "Impermeable y cortaviento", "Peso ultraligero"] },
+            { id: 4, name: "Silbato de Supervivencia Doble", price: 0.75, originalPrice: 3.00, discount: "75%", sku: "SILB-004", brand: "Alert", desc: "Produce un sonido fuerte y penetrante. Herramienta vital en situaciones de rescate.", features: ["Doble tubo", "Llavero integrado", "Material: Aleación de aluminio", "Color: Plateado"] },
+            { id: 5, name: "Cuchillo Plegable Básico", price: 4.99, originalPrice: 15.00, discount: "67%", sku: "CUCH-005", brand: "BladeEco", desc: "Navaja de bolsillo simple y funcional para tareas ligeras de camping y uso diario.", features: ["Hoja de acero inoxidable", "Mecanismo de bloqueo seguro", "Mango ergonómico", "Longitud de la hoja: 7 cm"] },
+            { id: 6, name: "Mini Botiquín (10 pz)", price: 3.99, originalPrice: 12.00, discount: "67%", sku: "BOT-006", brand: "FirstAid", desc: "Kit básico con curitas, toallitas de alcohol y gasas. Compacto para llevar en el bolsillo.", features: ["Estuche compacto con cremallera", "Incluye 10 elementos básicos", "Tamaño de bolsillo"] },
+            { id: 7, name: "Taza Plegable de Silicona", price: 1.49, originalPrice: 6.00, discount: "75%", sku: "TAZA-007", brand: "FoldUp", desc: "Taza de viaje que colapsa completamente para ahorrar espacio. Ideal para café o agua.", features: ["Silicona de grado alimenticio", "Capacidad: 250ml", "Resistente al calor y frío", "Fácil de limpiar"] },
+            { id: 8, name: "Kit de Pesca Básico (Viaje)", price: 5.99, originalPrice: 18.00, discount: "67%", sku: "PES-008", brand: "ReelLite", desc: "Pequeño kit de anzuelos, sedal y señuelos para pesca improvisada en viajes o supervivencia.", features: ["Mini carrete de mano", "Línea de 10 metros", "Varios tamaños de anzuelos", "Caja organizadora"] },
+            { id: 9, name: "Guantes Térmicos Finos", price: 4.50, originalPrice: 20.00, discount: "78%", sku: "GUAN-009", brand: "WarmFast", desc: "Guantes ligeros de capa interior para días fríos. Permite usar pantallas táctiles.", features: ["Material sintético térmico", "Compatibles con pantalla táctil", "Diseño unisex", "Talla única"] },
+            { id: 10, name: "Mochila Plegable 15L", price: 9.99, originalPrice: 35.00, discount: "71%", sku: "MOCH-010", brand: "PackGo", desc: "Mochila de día que se pliega en un pequeño bolsillo. Excelente para excursiones rápidas.", features: ["Capacidad: 15 Litros", "Material: Nylon 210D", "Resistente al agua", "Se pliega en 10x10 cm"] },
+            { id: 11, name: "Cuerda Paracord 10m", price: 3.25, originalPrice: 10.00, discount: "67%", sku: "CUER-011", brand: "StrongRope", desc: "Cuerda de paracaídas de 550lb de resistencia. Multiusos para amarres y supervivencia.", features: ["Longitud: 10 metros", "Resistencia de 250 kg (550lb)", "7 hebras interiores", "Color Verde Militar"] },
+            { id: 12, name: "Filtro de Agua Personal (Mini)", price: 12.50, originalPrice: 45.00, discount: "72%", sku: "FILT-012", brand: "HydroClean", desc: "Filtra el agua de ríos y arroyos. Compacto y fácil de llevar en el kit de emergencia.", features: ["Filtra hasta 1000 litros", "Elimina el 99.9% de bacterias", "Peso: 60g", "Se usa como pajita"] },
+            { id: 13, name: "Mini Estufa Portátil", price: 8.99, originalPrice: 30.00, discount: "70%", sku: "ESTU-013", brand: "CookLite", desc: "Estufa de gas butano ultraligera. Perfecta para cocinar comidas individuales en la montaña.", features: ["Plegable", "Encendido piezoeléctrico", "Soporta ollas pequeñas", "Peso: 100g (sin cartucho)"] },
+            { id: 14, name: "Juego de Cubiertos Acero Inox", price: 2.99, originalPrice: 9.00, discount: "67%", sku: "CUB-014", brand: "DineOut", desc: "Tenedor, cuchillo y cuchara que se unen en un juego compacto. Ideal para camping.", features: ["Acero inoxidable", "Incluye estuche de tela", "Lavable en lavavajillas", "Compacto y ligero"] },
+            { id: 15, name: "Gafas de Sol Deportivas (Polarizadas)", price: 4.99, originalPrice: 25.00, discount: "80%", sku: "GAF-015", brand: "SunPro", desc: "Gafas deportivas con protección UV400. Montura ligera para correr o hacer senderismo.", features: ["Lentes polarizadas", "Protección UV400", "Montura TR90 flexible", "Varios colores disponibles"] },
+            { id: 16, name: "Toalla Microfibra Pequeña", price: 3.50, originalPrice: 14.00, discount: "75%", sku: "TOA-016", brand: "QuickDry", desc: "Toalla de secado rápido que absorbe 5 veces su peso. Ideal para el gimnasio o viajes.", features: ["Tamaño: 40x80 cm", "Microfibra ultra-absorbente", "Incluye bolsa de transporte", "Anti-acterial"] },
+            { id: 17, name: "Bolsa Seca Impermeable 5L", price: 6.99, originalPrice: 22.00, discount: "68%", sku: "BOLSA-017", brand: "WaterSafe", desc: "Mantén tus objetos de valor secos. Esencial para kayak, rafting o lluvia intensa.", features: ["Capacidad: 5 Litros", "Material: PVC Tarpaulin", "Cierre enrollable", "Flotante"] },
+            { id: 18, name: "Mosquetón de Bloqueo (Pack 2)", price: 1.99, originalPrice: 7.00, discount: "72%", sku: "MOSQ-018", brand: "ClipOn", desc: "Mosquetones de aluminio con seguro de rosca. No aptos para escalada, solo para equipo.", features: ["Aluminio de aviación", "Mecanismo de bloqueo de rosca", "Carga máxima: 50kg", "Pack de 2 unidades"] },
+            { id: 19, name: "Inflador de Almohada Mini", price: 4.99, originalPrice: 15.00, discount: "67%", sku: "INFL-019", brand: "AirPump", desc: "Bomba de aire manual pequeña para inflar almohadas de camping o pequeños colchones.", features: ["Miniatura y portátil", "Funciona a mano o pie", "Válvula universal", "Peso: 80g"] },
+            { id: 20, name: "Candado de Combinación Viaje", price: 3.75, originalPrice: 12.00, discount: "69%", sku: "CAND-020", brand: "SafeLock", desc: "Candado de 3 dígitos para asegurar equipaje, taquillas o mochilas. Aprobado por TSA (simulado).", features: ["Cuerpo de zinc", "Combinación reajustable de 3 dígitos", "Aprobado por 'TSA' (simulado)", "Ideal para mochilas"] }
+        ];
+
+        let cart = [];
+        let currentView = 'list'; // 'list' o 'detail'
+        let shippingDetails = {}; // Para guardar los datos del cliente/factura temporalmente
+
         // Función de utilidad para formatear la moneda
         const formatCurrency = (amount) => `$${amount.toFixed(2)}`;
 
-        /** * Calcula la fecha de entrega estimada (simulación: 5 a 10 días hábiles)
-         */
-        function getDeliveryDate(days) {
-            const date = new Date();
-            date.setDate(date.getDate() + days);
-            return date.toLocaleDateString('es-ES', { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
-            });
-        }
+        // --- MANEJO DEL CARRITO Y PAGOS ---
 
-        /** * Carga los datos de la última orden desde localStorage y renderiza la confirmación.
-         */
-        function loadOrderConfirmation() {
-            const contentDiv = document.getElementById('confirmation-content');
-            const orderDataString = localStorage.getItem('lastOrder');
-
-            if (!orderDataString) {
-                // Caso: No hay datos de orden (llegó directamente a la página)
-                contentDiv.innerHTML = `
-                    <h1 class="text-3xl font-bold text-red-500 text-center mb-6">⚠️ Error de Confirmación</h1>
-                    <p class="text-center text-gray-600 mb-8">
-                        No se encontraron detalles de la última orden. Por favor, regrese a la <a href="index.html" class="text-blue-500 hover:underline font-semibold">tienda principal</a> para realizar una compra.
-                    </p>
-                `;
-                return;
-            }
-
-            try {
-                const order = JSON.parse(orderDataString);
-                const estimatedDate = getDeliveryDate(7); // 7 días promedio
-
-                let itemsListHTML = order.items.map(item => `
-                    <div class="flex justify-between text-sm py-1">
-                        <span class="text-gray-600">${item.quantity} x ${item.name}</span>
-                        <span class="font-medium">${formatCurrency(item.price * item.quantity)}</span>
-                    </div>
-                `).join('');
-
-                contentDiv.innerHTML = `
-                    <div class="text-center mb-8">
-                        <svg class="mx-auto h-16 w-16 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <h1 class="success-title mt-4">¡PEDIDO CONFIRMADO!</h1>
-                        <p class="text-xl text-gray-700 font-semibold mt-2">Gracias por comprar en Gangas del Explorador.</p>
-                    </div>
-
-                    <div class="grid md:grid-cols-2 gap-6 mb-8">
-                        <!-- Resumen de Orden -->
-                        <div class="summary-box">
-                            <h2 class="text-xl font-bold text-red-700 mb-3">Detalles de la Orden</h2>
-                            <p class="mb-1"><strong>ID de Orden:</strong> <span class="text-green-600 font-extrabold">${order.id}</span></p>
-                            <p class="mb-1"><strong>Fecha:</strong> ${order.date}</p>
-                            <div class="border-t border-gray-200 mt-3 pt-3">
-                                <p class="text-2xl font-extrabold text-red-700">Total Pagado: ${formatCurrency(order.total)}</p>
-                            </div>
-                        </div>
-
-                        <!-- Dirección y Envío -->
-                        <div class="summary-box">
-                            <h2 class="text-xl font-bold text-red-700 mb-3">Datos de Envío</h2>
-                            <p class="mb-1"><strong>Destinatario:</strong> ${order.shipping.name}</p>
-                            <p class="mb-1"><strong>Cédula:</strong> ${order.shipping.id}</p>
-                            <p class="mb-1"><strong>Dirección:</strong> ${order.shipping.address}</p>
-                            <div class="border-t border-gray-200 mt-3 pt-3">
-                                <p class="text-lg font-bold text-orange-600">Llega aprox.: ${estimatedDate}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Lista de Productos -->
-                    <h2 class="text-xl font-bold text-gray-800 mb-3 border-t pt-4">Productos Comprados (${order.items.length})</h2>
-                    <div class="bg-white border rounded-lg p-4 space-y-2">
-                        ${itemsListHTML}
-                    </div>
-
-                    <div class="text-center mt-8">
-                        <a href="index.html" class="cta-button inline-block px-8 py-3 text-white rounded-lg font-bold text-lg hover:shadow-xl">
-                            Volver a la Tienda Principal
-                        </a>
-                    </div>
-                `;
-
-                // Opcional: Limpiar localStorage después de mostrar (para evitar que se recargue la misma orden)
-                localStorage.removeItem('lastOrder'); 
-
-            } catch (e) {
-                console.error("Error al parsear datos de la orden:", e);
-                contentDiv.innerHTML = `<h1 class="text-3xl font-bold text-red-500 text-center mb-6">Error en los datos de la orden.</h1>`;
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', loadOrderConfirmation);Add confirmation.html for checkout flow
-    </script>
-
-</body>
-</html>
-
-  
+        /** Muestra un modal de notificación simple (sustituye a alert() y confirm()) */
+        function showNotification(message) {
+            const notificationEl = document.createElement('div');
+            notificationEl.className = 'fixed top-20 right-5 bg-green-600 text-white p-3 rounded-lg shadow-xl z-50 transition-opacity duration-300';
+            notificationEl.textContent = message;
+            document.body.appendChild(notificationEl);
+          
