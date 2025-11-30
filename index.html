@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gangas del Explorador - Precios de Locura (Factura y Pago)</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
     <style>
         /* Estilos base de Temu-style (urgencia y precios bajos) */
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
         body { 
             font-family: 'Inter', sans-serif; 
             background-color: #f0f0f0; 
@@ -172,7 +172,7 @@
     <div id="app-container" class="p-4">
         
         <!-- VISTA DE LISTA DE PRODUCTOS (GRID) -->
-        <div id="product-list-view" class="hidden">
+        <div id="product-list-view" class=""> <!-- Inicialmente visible -->
             <h1 class="text-3xl font-bold text-center text-gray-800 my-6">¡Descubre las Gangas de Hoy!</h1>
             <div id="product-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
                 <!-- Los productos se inyectarán aquí por JavaScript -->
@@ -284,6 +284,19 @@
 
         </div>
     </div>
+    
+    <!-- MODAL DE CONFIRMACIÓN FINAL -->
+    <div id="confirmation-modal" class="fixed inset-0 bg-black bg-opacity-90 hidden items-center justify-center z-50">
+        <div class="bg-white p-8 rounded-lg w-11/12 md:w-1/3 shadow-2xl text-center">
+            <h2 class="text-4xl font-extrabold mb-4 text-green-600">¡Pedido Enviado!</h2>
+            <svg class="w-16 h-16 text-green-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <p class="mb-4 text-gray-700">Tu orden ha sido registrada. Procesaremos la verificación del pago en las próximas 24 horas.</p>
+            <p class="text-xl font-bold mb-6 text-red-600">¡Gracias por tu compra en Gangas del Explorador!</p>
+            <button onclick="resetApp()" class="buy-button w-full p-3 text-white font-bold rounded-lg">
+                Volver a las Gangas
+            </button>
+        </div>
+    </div>
 
 
     <script>
@@ -308,100 +321,4 @@
             { id: 17, name: "Bolsa Seca Impermeable 5L", price: 6.99, originalPrice: 22.00, discount: "68%", sku: "BOLSA-017", brand: "WaterSafe", desc: "Mantén tus objetos de valor secos. Esencial para kayak, rafting o lluvia intensa.", features: ["Capacidad: 5 Litros", "Material: PVC Tarpaulin", "Cierre enrollable", "Flotante"] },
             { id: 18, name: "Mosquetón de Bloqueo (Pack 2)", price: 1.99, originalPrice: 7.00, discount: "72%", sku: "MOSQ-018", brand: "ClipOn", desc: "Mosquetones de aluminio con seguro de rosca. No aptos para escalada, solo para equipo.", features: ["Aluminio de aviación", "Mecanismo de bloqueo de rosca", "Carga máxima: 50kg", "Pack de 2 unidades"] },
             { id: 19, name: "Inflador de Almohada Mini", price: 4.99, originalPrice: 15.00, discount: "67%", sku: "INFL-019", brand: "AirPump", desc: "Bomba de aire manual pequeña para inflar almohadas de camping o pequeños colchones.", features: ["Miniatura y portátil", "Funciona a mano o pie", "Válvula universal", "Peso: 80g"] },
-            { id: 20, name: "Candado de Combinación Viaje", price: 3.75, originalPrice: 12.00, discount: "69%", sku: "CAND-020", brand: "SafeLock", desc: "Candado de 3 dígitos para asegurar equipaje, taquillas o mochilas. Aprobado por TSA (simulado).", features: ["Cuerpo de zinc", "Combinación reajustable de 3 dígitos", "Aprobado por 'TSA' (simulado)", "Ideal para mochilas"] }
-        ];
-
-        let cart = [];
-        let currentView = 'list'; // 'list' o 'detail'
-        let shippingDetails = {}; // Para guardar los datos del cliente/factura temporalmente
-
-        // Función de utilidad para formatear la moneda
-        const formatCurrency = (amount) => `$${amount.toFixed(2)}`;
-
-        // --- MANEJO DEL CARRITO Y PAGOS ---
-
-        /** Muestra un modal de notificación simple (sustituye a alert() y confirm()) */
-        function showNotification(message) {
-            const notificationEl = document.createElement('div');
-            notificationEl.className = 'fixed top-20 right-5 bg-green-600 text-white p-3 rounded-lg shadow-xl z-50 transition-opacity duration-300';
-            notificationEl.textContent = message;
-            document.body.appendChild(notificationEl);
-                      if (cart.length === 0) {
-                emptyMessage.classList.remove('hidden');
-                cartSummaryElement.classList.add('hidden');
-                cartItemsContainer.appendChild(emptyMessage);
-            } else {
-                emptyMessage.classList.add('hidden');
-                cartSummaryElement.classList.remove('hidden');
-
-                cart.forEach(item => {
-                    const itemTotal = item.price * item.quantity;
-                    total += itemTotal;
-                    totalItems += item.quantity;
-
-                    // Creación del elemento HTML para cada artículo del carrito
-                    const itemEl = document.createElement('div');
-                    itemEl.className = 'flex items-center justify-between border-b pb-2 last:border-b-0 last:pb-0';
-                    itemEl.innerHTML = `
-                        <div class="flex-grow">
-                            <p class="font-medium text-gray-800">${item.name}</p>
-                            <p class="text-sm text-gray-500">$${item.price.toFixed(2)} x ${item.quantity}</p>
-                        </div>
-                        <div class="flex items-center space-x-3">
-                            <input type="number" min="1" value="${item.quantity}"
-                                onchange="updateQuantity(${item.id}, this.value)"
-                                class="w-16 p-1 border rounded-md text-center focus:ring-indigo-500 focus:border-indigo-500">
-                            <button onclick="removeFromCart(${item.id})"
-                                class="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-100 transition duration-200"
-                                aria-label="Eliminar ${item.name}">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                            </button>
-                        </div>
-                    `;
-                    cartItemsContainer.appendChild(itemEl);
-                });
-            }
-
-            // Actualizar resumen
-            cartCountElement.textContent = totalItems;
-            cartTotalElement.textContent = `$${total.toFixed(2)}`;
-        }
-
-        // --- Función de Finalizar Compra ---
-
-        /**
-         * Simula la finalización de la compra.
-         */
-        function checkout() {
-            if (cart.length === 0) {
-                showNotification("El carrito está vacío. Agrega productos.", 2500);
-                return;
-            }
-
-            // Crear el objeto de la orden que se pasará a la página de confirmación
-            const order = {
-                id: Date.now(), // ID de orden simple
-                date: new Date().toLocaleDateString('es-ES'),
-                total: cart.reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2),
-                items: cart.map(item => ({
-                    name: item.name,
-                    quantity: item.quantity,
-                    price: item.price.toFixed(2)
-                }))
-            };
-
-            // Guardar la orden en localStorage para que la página de confirmación la lea
-            localStorage.setItem('lastOrder', JSON.stringify(order));
-
-            // Simular el pago y navegar a la página de confirmación
-            // La URL de destino DEBE ser 'confirmation.html'
-            window.location.href = 'confirmation.html';
-        }
-
-        // Inicialización: Cargar el carrito cuando la página esté lista
-        document.addEventListener('DOMContentLoaded', loadCart);
-    </script>
-</body>
-</html>
-
-  
+            { id: 20, name: "Candado de Combinación Viaje", price: 3.75, originalPrice: 12.00, disco
